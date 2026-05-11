@@ -29,7 +29,7 @@ rhythms = [
         "Sinus Bradycardia"
     ]
 
-    result = {
+result = {
         "interpretation":"AI preliminary ECG screening completed.",
         "rhythm": random.choice(rhythms),
         "heart_rate": random.randint(60,110),
@@ -37,7 +37,7 @@ rhythms = [
         "confidence": random.randint(90,99)
     }
 
-    return jsonify(result)
+return jsonify(result)
 
 import os
 
