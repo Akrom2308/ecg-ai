@@ -1,5 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from analyzer.rhythm import calculate_heart_rate
+from analyzer.rhythm import classify_rhythm
+from analyzer.preprocess import load_ecg_image
 from PIL import Image
 import random
 
@@ -12,9 +15,13 @@ def analyze_ecg():
     if "file" not in request.files:
         return jsonify({"error":"No file uploaded"}), 400
 
-    file = request.files["file"]
+file = request.files["file"]
 
-    image = Image.open(file)
+filepath = "uploads/ecg.png"
+
+file.save(filepath)
+ 
+image = load_ecg_image(filepath)
 
     rhythms = [
         "Normal Sinus Rhythm",
