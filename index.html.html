@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ECG Intelligence</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-soft: #0d1c33;
+      --card: rgba(255,255,255,0.08);
+      --card-border: rgba(255,255,255,0.12);
+      --text: #f8fafc;
+      --muted: #b6c2d2;
+      --primary: #4f8cff;
+      --accent: #14b8a6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 20%, rgba(79,140,255,.18), transparent 25%),
+        radial-gradient(circle at 90% 15%, rgba(20,184,166,.14), transparent 22%),
+        linear-gradient(145deg, var(--bg), var(--bg-soft));
+    }
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+    nav {
+      position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(7,17,31,.55);
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .nav-inner {
+      height: 76px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { font-size: 18px; font-weight: 700; }
+    .nav-right { display:flex; gap:20px; align-items:center; }
+    .nav-links { display: flex; gap: 24px; font-size: 14px; }
+    .nav-links a { color: var(--muted); text-decoration:none; }
+    .lang button {
+      border:none; cursor:pointer; border-radius:10px; padding:8px 12px;
+      background: rgba(255,255,255,.06); color: white;
+    }
+    section { padding: 80px 0; }
+    .hero {
+      display: grid; grid-template-columns: 1.1fr .9fr; gap: 52px;
+      align-items: center; padding-top: 80px;
+    }
+    .badge {
+      display:inline-block; padding:7px 14px; border-radius:999px;
+      background: rgba(255,255,255,.06); color: var(--muted);
+      font-size: 12px; margin-bottom: 18px;
+    }
+    h1 { margin:0; font-size:58px; line-height:1.02; max-width:650px; }
+    .lead {
+      margin-top:20px; max-width:560px; color:var(--muted);
+      line-height:1.8; font-size:16px;
+    }
+    .actions { margin-top:28px; display:flex; gap:14px; }
+    .btn {
+      padding:14px 22px; border-radius:14px; border:none;
+      cursor:pointer; font-size:15px; font-weight:600;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #6ea8ff);
+      color:white;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,.05);
+      color:white;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .panel {
+      padding:28px; border-radius:28px; background:var(--card);
+      border:1px solid var(--card-border); backdrop-filter: blur(18px);
+    }
+    .panel-title { color: var(--muted); font-size:14px; margin-bottom:16px; }
+    .wave {
+      height:110px; border-radius:18px; background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06); margin-bottom:18px;
+    }
+    .wave svg { width:100%; height:100%; }
+    .upload-box {
+      padding:18px; border-radius:16px; background: rgba(255,255,255,.03);
+      border:1px dashed rgba(255,255,255,.12); margin-bottom:14px;
+    }
+    input[type=file] { width:100%; color:var(--muted); }
+    .filename { margin-top:10px; color:var(--muted); font-size:13px; }
+    .analysis-status { margin-top:12px; color: var(--muted); }
+    h2 { font-size: 34px; margin-bottom: 16px; }
+    .section-text { color: var(--muted); max-width: 700px; line-height: 1.8; }
+    .cards { display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin-top:24px; }
+    .card {
+      padding:22px; border-radius:20px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .card-title { font-weight:700; margin-bottom:8px; }
+    .card p { color:var(--muted); line-height:1.7; margin:0; }
+    .contact-box {
+      padding:24px; border-radius:20px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+      max-width:700px;
+    }
+    .person { margin-bottom:18px; }
+    .person:last-child { margin-bottom:0; }
+    footer { padding: 24px 0 48px; color: var(--muted); }
+    @media (max-width: 920px) {
+      .hero { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+      h1 { font-size: 42px; }
+.loader {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,.15);
+  border-top: 3px solid #4f8cff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 16px auto;
+  display:none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container nav-inner">
+      <div class="brand">ECG Intelligence</div>
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="#platform" data-i18n="platformNav">Platform</a>
+          <a href="#research" data-i18n="researchNav">Research</a>
+          <a href="#contact" data-i18n="contactNav">Contact</a>
+        </div>
+        <div class="lang">
+          <button onclick="setLang('en')">EN</button>
+          <button onclick="setLang('uz')">UZ</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="badge" data-i18n="badge">Clinical ECG Screening</div>
+        <h1 data-i18n="title">Modern cardiac signal analysis for clinical environments</h1>
+        <div class="lead" data-i18n="lead">Upload electrocardiogram recordings, prepare signal quality, and move toward structured clinical interpretation.</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="document.getElementById('platform').scrollIntoView()" data-i18n="learn">Learn More</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('contact').scrollIntoView()" data-i18n="contactBtn">Contact</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title" data-i18n="workspace">ECG Upload Workspace</div>
+        <div class="wave">
+          <svg viewBox="0 0 500 110" fill="none">
+            <path d="M0 55 L80 55 L110 55 L126 25 L142 88 L165 55 L210 55 L240 55 L257 35 L270 72 L292 55 L500 55" stroke="#14b8a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="upload-box">
+          <div id="previewWrap" style="display:none; margin-top:14px;">
+  <img id="previewImage"
+       style="width:100%; border-radius:16px; border:1px solid rgba(255,255,255,.08);" />
+</div>
+          <input type="file" id="ecgFile" />
+          <div class="filename" id="fileName"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="analyze()" data-i18n="analyze">Analyze</button>
+        <div id="analysisStatus" class="filename analysis-status"></div>
+        <div id="resultCard" class="card" style="display:none; margin-top:14px;">
+          <div class="card-title">Analysis Result</div>
+          <p id="resultText"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="platform">
+      <h2 data-i18n="platformTitle">Platform</h2>
+      <div class="section-text" data-i18n="platformText">Structured ECG upload, preprocessing, analysis, and interpretable clinical output.</div>
+    </section>
+
+    <section id="research">
+      <h2 data-i18n="researchTitle">Research</h2>
+      <div class="cards">
+        <div class="card"><div class="card-title">Signal Processing</div><p>Noise filtering and waveform preparation.</p></div>
+        <div class="card"><div class="card-title">Arrhythmia Detection</div><p>Recognition of abnormal rhythm signatures.</p></div>
+        <div class="card"><div class="card-title">Clinical Validation</div><p>Evaluation of reliability and medical applicability.</p></div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <h2 data-i18n="contactTitle">Contact</h2>
+      <div class="contact-box">
+        <div class="person"><strong>Dr. Akrom Komiljonov</strong><br>Email: komiljonovakrom@gmail.com<br>Phone: +998 93 212 23 08</div>
+        <div class="person"><strong>Dr. Farruh Qadamboyev</strong><br>Phone: +998 93 965 12 72</div>
+      </div>
+    </section>
+
+    <footer>© 2026 ECG Intelligence</footer>
+  </main>
+
+  <script>
+  const fileInput = document.getElementById('ecgFile');
+  const fileName = document.getElementById('fileName');
+  window.currentLang = 'en';
+
+  const translations = {
+    en: {
+      platformNav:'Platform',
+      researchNav:'Research',
+      contactNav:'Contact',
+      badge:'Clinical ECG Screening',
+      title:'Modern cardiac signal analysis for clinical environments',
+      lead:'Upload electrocardiogram recordings, prepare signal quality, and move toward structured clinical interpretation.',
+      learn:'Learn More',
+      contactBtn:'Contact',
+      workspace:'ECG Upload Workspace',
+      analyze:'Analyze',
+      platformTitle:'Platform',
+      platformText:'Structured ECG upload, preprocessing, analysis, and interpretable clinical output.',
+      researchTitle:'Research',
+      contactTitle:'Contact',
+      analysisLoading:'Analyzing ECG signal...',
+      analysisDone:'Analysis complete',
+      analysisResult:'Rhythm: Normal sinus rhythm · Signal quality: Good · Confidence: 94%'
+    },
+    uz: {
+      platformNav:'Platforma',
+      researchNav:'Tadqiqot',
+      contactNav:'Kontakt',
+      badge:'Klinik EKG skriningi',
+      title:'Klinik muhitlar uchun zamonaviy yurak signali tahlili',
+      lead:"Elektrokardiogramma yozuvlarini yuklang, signal sifatini tayyorlang va klinik interpretatsiyaga o'ting.",
+      learn:'Batafsil',
+      contactBtn:'Kontakt',
+      workspace:'EKG yuklash oynasi',
+      analyze:'Tahlil qilish',
+      platformTitle:'Platforma',
+      platformText:'Strukturali EKG yuklash, preprocessing, tahlil va klinik natijalar.',
+      researchTitle:'Tadqiqot',
+      contactTitle:'Kontakt',
+      analysisLoading:'EKG signali tahlil qilinmoqda...',
+      analysisDone:'Tahlil yakunlandi',
+      analysisResult:'Ritm: Normal sinus ritm · Signal sifati: Yaxshi · Ishonchlilik: 94%'
+    }
+  };
+
+  function setLang(lang) {
+    window.currentLang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[lang][key]) {
+        el.textContent = translations[lang][key];
+      }
+    });
+  }
+
+  fileInput.addEventListener('change', function () {
+    const previewWrap = document.getElementById('previewWrap');
+    const previewImage = document.getElementById('previewImage');
+
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      fileName.textContent = 'Selected: ' + file.name;
+
+      if (previewWrap && previewImage) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+          previewWrap.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    } else {
+      fileName.textContent = '';
+      if (previewWrap) previewWrap.style.display = 'none';
+    }
+  });
+
+  async function analyze() {
+if (fileInput.files.length === 0) {
+      alert('Please choose a file first.');
+      return;
+    }
+
+    const status = document.getElementById('analysisStatus');
+    const resultCard = document.getElementById('resultCard');
+    const resultText = document.getElementById('resultText');
+    const lang = window.currentLang || 'en';
+
+    resultCard.style.display = 'none';
+    status.textContent = translations[lang].analysisLoading;
+
+    setTimeout(() => {
+      status.textContent = translations[lang].analysisDone;
+      resultText.textContent = translations[lang].analysisResult;
+      resultCard.style.display = 'block';
+    }, 1800);
+  }
+
+  setLang('en');
+</script>
+</body>
+</html>
