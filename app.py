@@ -30,7 +30,6 @@ def analyze_ecg():
 
     return jsonify(result)
 
-import os
 
 import os
 
