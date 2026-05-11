@@ -23,13 +23,13 @@ file.save(filepath)
  
 image = load_ecg_image(filepath)
 
-rhythms = [
+ rhythms = [
         "Normal Sinus Rhythm",
         "Sinus Tachycardia",
         "Sinus Bradycardia"
     ]
 
-result = {
+ result = {
     "interpretation":"AI preliminary ECG screening completed.",
     "rhythm": rhythm,
     "heart_rate": heart_rate,
@@ -37,7 +37,7 @@ result = {
     "confidence":96
 }
 
-return jsonify(result)
+ return jsonify(result)
 
 import os
 
