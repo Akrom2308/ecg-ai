@@ -23,7 +23,7 @@ file.save(filepath)
  
 image = load_ecg_image(filepath)
 
-    rhythms = [
+rhythms = [
         "Normal Sinus Rhythm",
         "Sinus Tachycardia",
         "Sinus Bradycardia"
