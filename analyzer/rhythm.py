@@ -1,17 +1,17 @@
+import numpy as np
+
+
 def calculate_heart_rate(r_peaks):
 
     if len(r_peaks) < 2:
         return 0
 
-    rr_intervals = []
+    rr_intervals = np.diff(r_peaks)
 
-    for i in range(1, len(r_peaks)):
+    avg_rr = np.mean(rr_intervals)
 
-        rr = r_peaks[i] - r_peaks[i - 1]
-
-        rr_intervals.append(rr)
-
-    avg_rr = sum(rr_intervals) / len(rr_intervals)
+    if avg_rr == 0:
+        return 0
 
     heart_rate = 6000 / avg_rr
 
@@ -19,6 +19,9 @@ def calculate_heart_rate(r_peaks):
 
 
 def classify_rhythm(hr):
+
+    if hr == 0:
+        return "Unable to detect rhythm"
 
     if hr < 60:
         return "Sinus Bradycardia"
