@@ -2,7 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 
-from analyzer.preprocess import load_ecg_image
+from analyzer.preprocess import (
+    load_ecg_image,
+    validate_ecg_image
+)
 from analyzer.detect_peaks import detect_r_peaks
 from analyzer.rhythm import (
     calculate_heart_rate,
