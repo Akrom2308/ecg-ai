@@ -148,7 +148,6 @@ def validate_ecg_image(path):
     if image is None:
         return False, "Image could not be loaded"
 
-    # resize
     image = cv2.resize(image, (1200, 600))
 
     gray = cv2.cvtColor(
@@ -156,14 +155,62 @@ def validate_ecg_image(path):
         cv2.COLOR_BGR2GRAY
     )
 
-    # blur
+    # =========================
+    # ECG GRID DETECTION
+    # =========================
+
+    edges = cv2.Canny(
+        gray,
+        50,
+        150
+    )
+
+    lines = cv2.HoughLinesP(
+        edges,
+        1,
+        np.pi / 180,
+        threshold=100,
+        minLineLength=40,
+        maxLineGap=5
+    )
+
+    horizontal_lines = 0
+    vertical_lines = 0
+
+    if lines is not None:
+
+        for line in lines:
+
+            x1, y1, x2, y2 = line[0]
+
+            dx = abs(x2 - x1)
+            dy = abs(y2 - y1)
+
+            # horizontal grid
+            if dx > 35 and dy < 5:
+                horizontal_lines += 1
+
+            # vertical grid
+            if dy > 35 and dx < 5:
+                vertical_lines += 1
+
+    # ECG papers usually have many grid lines
+    if horizontal_lines < 25:
+        return False, "ECG grid not detected"
+
+    if vertical_lines < 25:
+        return False, "ECG grid not detected"
+
+    # =========================
+    # ECG WAVEFORM DETECTION
+    # =========================
+
     blur = cv2.GaussianBlur(
         gray,
         (5, 5),
         0
     )
 
-    # threshold
     thresh = cv2.adaptiveThreshold(
         blur,
         255,
@@ -173,7 +220,6 @@ def validate_ecg_image(path):
         2
     )
 
-    # find contours
     contours, _ = cv2.findContours(
         thresh,
         cv2.RETR_EXTERNAL,
@@ -186,42 +232,50 @@ def validate_ecg_image(path):
 
         area = cv2.contourArea(contour)
 
-        if area < 80:
+        if area < 40:
             continue
 
         x, y, w, h = cv2.boundingRect(contour)
 
         ratio = w / float(h)
 
-        # ECG waveform properties
+        # ECG wave shape
         if (
-            w > 40 and
-            h > 8 and
-            ratio > 2
+            w > 25 and
+            h > 5 and
+            ratio > 2.5
         ):
 
             waveform_count += 1
 
-    # ECG usually contains many waveform segments
-    if waveform_count < 15:
+    if waveform_count < 20:
+        return False, "ECG waveform not detected"
 
-        return False, "No valid ECG waveform detected"
+    # =========================
+    # TEXT SCREENSHOT FILTER
+    # =========================
 
-    # edge density
-    edges = cv2.Canny(
-        gray,
-        50,
-        150
-    )
+    text_like = 0
 
-    edge_pixels = np.sum(edges > 0)
+    for contour in contours:
 
-    if edge_pixels < 12000:
+        x, y, w, h = cv2.boundingRect(contour)
 
-        return False, "Invalid ECG structure"
+        # text blocks
+        if (
+            w > 20 and
+            w < 300 and
+            h > 10 and
+            h < 80
+        ):
+
+            text_like += 1
+
+    # screenshots usually contain many text boxes
+    if text_like > 120:
+        return False, "Screenshot detected instead of ECG"
 
     return True, "Valid ECG image"
-
 
     # =========================
     # RESOLUTION CHECK
