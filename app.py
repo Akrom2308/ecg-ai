@@ -34,12 +34,6 @@ def analyze_ecg():
 
     file = request.files["file"]
 
-    if file.filename == "":
-
-        return jsonify({
-            "error": "Empty filename"
-        }), 400
-
     filepath = os.path.join(
         UPLOAD_FOLDER,
         "ecg.png"
@@ -49,6 +43,17 @@ def analyze_ecg():
 
     signal = load_ecg_image(filepath)
 
+    from analyzer.preprocess import validate_ecg
+
+    is_valid = validate_ecg(signal)
+
+    if not is_valid:
+
+        return jsonify({
+            "error":
+            "Uploaded image is not a valid ECG"
+        }), 400
+
     r_peaks = detect_r_peaks(signal)
 
     heart_rate = calculate_heart_rate(r_peaks)
@@ -56,28 +61,11 @@ def analyze_ecg():
     rhythm = classify_rhythm(heart_rate)
 
     result = {
-        "interpretation":
-            "AI preliminary ECG screening completed.",
-
         "rhythm": rhythm,
-
         "heart_rate": heart_rate,
-
-        "detected_r_peaks": len(r_peaks),
-
-        "signal_quality": "Good",
-
-        "confidence": 96
+        "r_peaks_detected": len(r_peaks),
+        "signal_quality": "Analyzed",
+        "confidence": 92
     }
 
     return jsonify(result)
-
-
-if __name__ == "__main__":
-
-    port = int(os.environ.get("PORT", 5000))
-
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
