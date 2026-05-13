@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def calculate_heart_rate(r_peaks):
 
     if len(r_peaks) < 2:
@@ -13,7 +12,8 @@ def calculate_heart_rate(r_peaks):
     if avg_rr == 0:
         return 0
 
-    heart_rate = 6000 / avg_rr
+    # ECG 300 rule
+    heart_rate = 300 / (avg_rr / 50)
 
     return int(heart_rate)
 
@@ -21,9 +21,9 @@ def calculate_heart_rate(r_peaks):
 def classify_rhythm(hr):
 
     if hr == 0:
-        return "Unable to detect rhythm"
+        return "Unable to Detect"
 
-    if hr < 60:
+    elif hr < 60:
         return "Sinus Bradycardia"
 
     elif hr > 100:
