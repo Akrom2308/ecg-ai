@@ -146,15 +146,82 @@ def validate_ecg_image(path):
     image = cv2.imread(path)
 
     if image is None:
-
         return False, "Image could not be loaded"
+
+    # resize
+    image = cv2.resize(image, (1200, 600))
 
     gray = cv2.cvtColor(
         image,
         cv2.COLOR_BGR2GRAY
     )
 
-    height, width = gray.shape
+    # blur
+    blur = cv2.GaussianBlur(
+        gray,
+        (5, 5),
+        0
+    )
+
+    # threshold
+    thresh = cv2.adaptiveThreshold(
+        blur,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        11,
+        2
+    )
+
+    # find contours
+    contours, _ = cv2.findContours(
+        thresh,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    waveform_count = 0
+
+    for contour in contours:
+
+        area = cv2.contourArea(contour)
+
+        if area < 80:
+            continue
+
+        x, y, w, h = cv2.boundingRect(contour)
+
+        ratio = w / float(h)
+
+        # ECG waveform properties
+        if (
+            w > 40 and
+            h > 8 and
+            ratio > 2
+        ):
+
+            waveform_count += 1
+
+    # ECG usually contains many waveform segments
+    if waveform_count < 15:
+
+        return False, "No valid ECG waveform detected"
+
+    # edge density
+    edges = cv2.Canny(
+        gray,
+        50,
+        150
+    )
+
+    edge_pixels = np.sum(edges > 0)
+
+    if edge_pixels < 12000:
+
+        return False, "Invalid ECG structure"
+
+    return True, "Valid ECG image"
+
 
     # =========================
     # RESOLUTION CHECK
