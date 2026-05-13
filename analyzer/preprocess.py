@@ -1,53 +1,243 @@
 import cv2
 import numpy as np
 
+
+# ==========================================
+# ECG IMAGE PREPROCESSING
+# ==========================================
+
+def load_ecg_image(path):
+
+    # =========================
+    # LOAD IMAGE
+    # =========================
+
+    image = cv2.imread(path)
+
+    if image is None:
+        raise ValueError("Image could not be loaded")
+
+    # =========================
+    # RESIZE
+    # =========================
+
+    image = cv2.resize(
+        image,
+        (1400, 700)
+    )
+
+    # =========================
+    # GRAYSCALE
+    # =========================
+
+    gray = cv2.cvtColor(
+        image,
+        cv2.COLOR_BGR2GRAY
+    )
+
+    # =========================
+    # CONTRAST ENHANCEMENT
+    # =========================
+
+    clahe = cv2.createCLAHE(
+        clipLimit=2.0,
+        tileGridSize=(8, 8)
+    )
+
+    enhanced = clahe.apply(gray)
+
+    # =========================
+    # NOISE REDUCTION
+    # =========================
+
+    blur = cv2.GaussianBlur(
+        enhanced,
+        (5, 5),
+        0
+    )
+
+    # =========================
+    # EDGE PRESERVING FILTER
+    # =========================
+
+    filtered = cv2.bilateralFilter(
+        blur,
+        9,
+        75,
+        75
+    )
+
+    # =========================
+    # ECG WAVE EXTRACTION
+    # =========================
+
+    thresh = cv2.adaptiveThreshold(
+        filtered,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        15,
+        3
+    )
+
+    # =========================
+    # REMOVE SMALL NOISE
+    # =========================
+
+    kernel = np.ones((2, 2), np.uint8)
+
+    cleaned = cv2.morphologyEx(
+        thresh,
+        cv2.MORPH_OPEN,
+        kernel
+    )
+
+    # =========================
+    # DILATE ECG LINES
+    # =========================
+
+    cleaned = cv2.dilate(
+        cleaned,
+        kernel,
+        iterations=1
+    )
+
+    # =========================
+    # EXTRACT 1D ECG SIGNAL
+    # =========================
+
+    signal = np.mean(
+        cleaned,
+        axis=0
+    )
+
+    # =========================
+    # NORMALIZE SIGNAL
+    # =========================
+
+    signal = signal.astype(np.float32)
+
+    signal = signal - np.mean(signal)
+
+    max_value = np.max(np.abs(signal))
+
+    if max_value != 0:
+        signal = signal / max_value
+
+    # =========================
+    # SMOOTH SIGNAL
+    # =========================
+
+    signal = cv2.GaussianBlur(
+        signal.reshape(1, -1),
+        (1, 9),
+        0
+    ).flatten()
+
+    return signal
+
+
+# ==========================================
+# ECG VALIDATION
+# ==========================================
+
 def validate_ecg_image(path):
 
     image = cv2.imread(path)
 
     if image is None:
+
         return False, "Image could not be loaded"
 
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(
+        image,
+        cv2.COLOR_BGR2GRAY
+    )
 
     height, width = gray.shape
 
-    # too small image
-    if width < 300 or height < 300:
+    # =========================
+    # RESOLUTION CHECK
+    # =========================
+
+    if width < 400 or height < 250:
+
         return False, "Image resolution too low"
 
-    # contrast check
+    # =========================
+    # CONTRAST CHECK
+    # =========================
+
     contrast = gray.std()
 
-    # edge density
-    edges = cv2.Canny(gray, 50, 150)
-    edge_pixels = np.sum(edges > 0)
+    if contrast < 18:
 
-    # ECG-like structure detection
-    if contrast < 20:
         return False, "Low contrast image"
 
-    if edge_pixels < 5000:
-        return False, "No ECG waveform detected"
+    # =========================
+    # EDGE DETECTION
+    # =========================
 
-    return True, "Valid ECG image"
-
-
-def load_ecg_image(path):
-
-    image = cv2.imread(path)
-
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-
-    _, thresh = cv2.threshold(
-        blur,
-        120,
-        255,
-        cv2.THRESH_BINARY_INV
+    edges = cv2.Canny(
+        gray,
+        50,
+        150
     )
 
-    signal = np.mean(thresh, axis=0)
+    edge_pixels = np.sum(edges > 0)
 
-    return signal
+    if edge_pixels < 7000:
+
+        return False, "No ECG waveform detected"
+
+    # =========================
+    # HORIZONTAL ECG STRUCTURE
+    # =========================
+
+    horizontal_projection = np.sum(
+        edges,
+        axis=1
+    )
+
+    waveform_lines = np.sum(
+        horizontal_projection >
+        np.mean(horizontal_projection) * 1.5
+    )
+
+    if waveform_lines < 8:
+
+        return False, "ECG waveform structure not detected"
+
+    # =========================
+    # VERTICAL GRID STRUCTURE
+    # =========================
+
+    vertical_projection = np.sum(
+        edges,
+        axis=0
+    )
+
+    vertical_patterns = np.sum(
+        vertical_projection >
+        np.mean(vertical_projection) * 1.3
+    )
+
+    if vertical_patterns < 15:
+
+        return False, "ECG grid pattern missing"
+
+    # =========================
+    # BACKGROUND CHECK
+    # =========================
+
+    white_pixels = np.sum(gray > 180)
+
+    total_pixels = gray.size
+
+    white_ratio = white_pixels / total_pixels
+
+    if white_ratio < 0.35:
+
+        return False, "Invalid ECG background"
+
+    return True, "Valid ECG image"
