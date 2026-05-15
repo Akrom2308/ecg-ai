@@ -273,12 +273,12 @@
     <div class="panel" style="margin-bottom:1rem">
       <div class="panel-header"><span class="dot"></span>Input Source</div>
       <div class="panel-body">
-        <div class="upload-zone" id="uploadZone">
+        <label class="upload-zone" id="uploadZone" for="fileInput">
           <div class="icon">📂</div>
           <strong>Upload ECG File</strong>
           <p>CSV, TXT, EDF, JSON, MIT-BIH .dat</p>
-          <input type="file" id="fileInput" accept=".csv,.txt,.edf,.json,.dat" />
-        </div>
+        </label>
+        <input type="file" id="fileInput" accept=".csv,.txt,.edf,.json,.dat" style="display:none" />
         <button class="btn btn-primary" id="analyzeBtn" style="margin-top:0.75rem" disabled>
           Analyze Signal
         </button>
@@ -393,7 +393,6 @@
   // ─── Upload zone ─────────────────────────────────────────────────────────
   const zone = document.getElementById('uploadZone');
   const fileInput = document.getElementById('fileInput');
-  zone.addEventListener('click', () => fileInput.click());
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
   zone.addEventListener('drop', e => {
