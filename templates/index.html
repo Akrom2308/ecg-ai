@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>ECG AI Analyzer</title>
 
@@ -13,260 +18,282 @@
 
     <style>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial,sans-serif;
         }
 
-        body {
-            background: #07111f;
-            color: white;
-            overflow-x: hidden;
+        body{
+            background:#07111f;
+            color:white;
+            overflow-x:hidden;
         }
 
-        .navbar {
-            width: 100%;
-            padding: 20px 8%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .navbar{
+            width:100%;
+            padding:20px 8%;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            background:rgba(0,0,0,0.3);
+            backdrop-filter:blur(10px);
+            position:sticky;
+            top:0;
+            z-index:100;
         }
 
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #00e5ff;
+        .logo{
+            font-size:30px;
+            font-weight:bold;
+            color:#00e5ff;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 30px;
+        .nav-links{
+            display:flex;
+            gap:30px;
         }
 
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            transition: 0.3s;
+        .nav-links a{
+            color:white;
+            text-decoration:none;
+            transition:0.3s;
         }
 
-        .nav-links a:hover {
-            color: #00e5ff;
+        .nav-links a:hover{
+            color:#00e5ff;
         }
 
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 8%;
+        .hero{
+            min-height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:40px 8%;
         }
 
-        .hero-content {
-            max-width: 1200px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 60px;
-            align-items: center;
+        .hero-content{
+            width:100%;
+            max-width:1200px;
+            display:grid;
+            grid-template-columns:
+            repeat(auto-fit,minmax(320px,1fr));
+            gap:60px;
+            align-items:center;
         }
 
-        .left h1 {
-            font-size: 58px;
-            line-height: 1.1;
-            margin-bottom: 25px;
+        .left h1{
+            font-size:58px;
+            line-height:1.1;
+            margin-bottom:25px;
         }
 
-        .left h1 span {
-            color: #00e5ff;
+        .left h1 span{
+            color:#00e5ff;
         }
 
-        .left p {
-            color: #cbd5e1;
-            line-height: 1.8;
-            margin-bottom: 30px;
+        .left p{
+            color:#cbd5e1;
+            line-height:1.8;
+            margin-bottom:30px;
         }
 
-        .upload-box {
-            background: rgba(255,255,255,0.05);
-            border: 2px dashed #00e5ff;
-            border-radius: 24px;
-            padding: 40px;
-            text-align: center;
-            transition: 0.3s;
+        .upload-box{
+            background:rgba(255,255,255,0.05);
+            border:2px dashed #00e5ff;
+            border-radius:24px;
+            padding:40px;
+            text-align:center;
         }
 
-        .upload-box:hover {
-            transform: translateY(-4px);
-            background: rgba(255,255,255,0.08);
+        .upload-box i{
+            font-size:70px;
+            color:#00e5ff;
+            margin-bottom:20px;
         }
 
-        .upload-box i {
-            font-size: 70px;
-            color: #00e5ff;
-            margin-bottom: 20px;
+        .upload-box h2{
+            margin-bottom:15px;
         }
 
-        .upload-box h2 {
-            margin-bottom: 15px;
+        .upload-box p{
+            color:#cbd5e1;
+            margin-bottom:25px;
         }
 
-        .upload-box p {
-            color: #cbd5e1;
-            margin-bottom: 25px;
+        input[type=file]{
+            display:none;
         }
 
-        input[type=file] {
-            display: none;
+        .upload-btn{
+            display:inline-block;
+            padding:14px 28px;
+            background:#00e5ff;
+            color:#07111f;
+            border-radius:12px;
+            cursor:pointer;
+            font-weight:bold;
+            transition:0.3s;
         }
 
-        .upload-btn {
-            display: inline-block;
-            padding: 14px 28px;
-            background: #00e5ff;
-            color: #07111f;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
+        .upload-btn:hover{
+            transform:scale(1.05);
         }
 
-        .upload-btn:hover {
-            transform: scale(1.05);
+        .analyze-btn{
+            width:100%;
+            margin-top:20px;
+            border:none;
+            padding:16px;
+            border-radius:14px;
+            background:
+            linear-gradient(
+                90deg,
+                #00e5ff,
+                #00bcd4
+            );
+            color:black;
+            font-size:17px;
+            font-weight:bold;
+            cursor:pointer;
         }
 
-        .analyze-btn {
-            margin-top: 20px;
-            width: 100%;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            background: linear-gradient(90deg,#00e5ff,#00bcd4);
-            color: black;
-            font-size: 17px;
-            font-weight: bold;
-            cursor: pointer;
+        .loading{
+            margin-top:20px;
+            display:none;
+            color:#00e5ff;
         }
 
-        .result-box {
-            margin-top: 25px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 18px;
-            padding: 20px;
-            display: none;
+        .preview{
+            width:100%;
+            margin-top:20px;
+            border-radius:16px;
+            display:none;
         }
 
-        .result-item {
-            margin-bottom: 14px;
-            color: #dbeafe;
+        .result-box{
+            margin-top:25px;
+            background:rgba(255,255,255,0.05);
+            border-radius:18px;
+            padding:20px;
+            display:none;
+            text-align:left;
         }
 
-        .loading {
-            margin-top: 20px;
-            display: none;
+        .result-item{
+            margin-bottom:14px;
+            color:#dbeafe;
         }
 
-        .features {
-            padding: 100px 8%;
+        .features{
+            padding:100px 8%;
         }
 
-        .section-title {
-            text-align: center;
-            font-size: 42px;
-            margin-bottom: 70px;
+        .section-title{
+            text-align:center;
+            font-size:42px;
+            margin-bottom:70px;
         }
 
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-            gap: 30px;
+        .feature-grid{
+            display:grid;
+            grid-template-columns:
+            repeat(auto-fit,minmax(250px,1fr));
+            gap:30px;
         }
 
-        .feature-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 24px;
-            padding: 35px;
-            transition: 0.3s;
+        .feature-card{
+            background:rgba(255,255,255,0.05);
+            border-radius:24px;
+            padding:35px;
         }
 
-        .feature-card:hover {
-            transform: translateY(-6px);
+        .feature-card i{
+            font-size:45px;
+            color:#00e5ff;
+            margin-bottom:20px;
         }
 
-        .feature-card i {
-            font-size: 45px;
-            color: #00e5ff;
-            margin-bottom: 20px;
+        .feature-card h3{
+            margin-bottom:15px;
         }
 
-        .feature-card h3 {
-            margin-bottom: 15px;
+        .contact{
+            padding:100px 8%;
         }
 
-        .contact {
-            padding: 100px 8%;
+        .contact-container{
+            display:grid;
+            grid-template-columns:
+            repeat(auto-fit,minmax(300px,1fr));
+            gap:40px;
         }
 
-        .contact-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
-            gap: 40px;
+        .contact-box{
+            background:rgba(255,255,255,0.05);
+            padding:35px;
+            border-radius:24px;
         }
 
-        .contact-box {
-            background: rgba(255,255,255,0.05);
-            padding: 35px;
-            border-radius: 24px;
+        .contact-box h2{
+            margin-bottom:20px;
         }
 
-        .contact-box h2 {
-            margin-bottom: 20px;
+        .contact-box p{
+            margin-bottom:14px;
+            color:#cbd5e1;
         }
 
-        .contact-box p {
-            margin-bottom: 14px;
-            color: #cbd5e1;
+        .footer{
+            text-align:center;
+            padding:30px;
+            color:#94a3b8;
         }
 
-        .footer {
-            text-align: center;
-            padding: 30px;
-            color: #94a3b8;
-        }
+        @media(max-width:768px){
 
-        @media(max-width:768px) {
-
-            .left h1 {
-                font-size: 42px;
+            .left h1{
+                font-size:42px;
             }
 
-            .nav-links {
-                display: none;
+            .nav-links{
+                display:none;
             }
 
-            .hero {
-                padding-top: 70px;
+            .hero{
+                padding-top:70px;
             }
         }
 
     </style>
+
 </head>
+
 <body>
 
     <nav class="navbar">
-        <div class="logo">ECG AI</div>
+
+        <div class="logo">
+            ECG AI
+        </div>
 
         <div class="nav-links">
-            <a href="#home">Home</a>
-            <a href="#features">Features</a>
-            <a href="#contact">Contact</a>
+
+            <a href="#home">
+                Home
+            </a>
+
+            <a href="#features">
+                Features
+            </a>
+
+            <a href="#contact">
+                Contact
+            </a>
+
         </div>
+
     </nav>
 
     <section class="hero" id="home">
@@ -281,9 +308,9 @@
                 </h1>
 
                 <p>
-                    Upload ECG images in PNG or JPG format and get AI-based
-                    rhythm analysis, heart rate estimation, signal quality
-                    detection, and automated ECG interpretation.
+                    Upload ECG images in PNG or JPG format
+                    and get AI-based rhythm analysis,
+                    heart rate detection and ECG interpretation.
                 </p>
 
             </div>
@@ -294,41 +321,75 @@
 
                     <i class="fa-solid fa-heart-pulse"></i>
 
-                    <h2>Upload ECG</h2>
+                    <h2>
+                        Upload ECG Image
+                    </h2>
 
                     <p>
-                        Supported formats: PNG, JPG, JPEG
+                        PNG / JPG / JPEG supported
                     </p>
 
-                    <label for="ecgFile" class="upload-btn">
-                        Choose ECG Image
+                    <label
+                        for="ecgFile"
+                        class="upload-btn"
+                    >
+                        Choose ECG
                     </label>
 
                     <input
                         type="file"
                         id="ecgFile"
                         accept="image/png,image/jpeg,image/jpg"
-                    />
+                    >
 
-                    <button class="analyze-btn" onclick="analyzeECG()">
+                    <img
+                        id="preview"
+                        class="preview"
+                    >
+
+                    <button
+                        class="analyze-btn"
+                        onclick="analyzeECG()"
+                    >
                         Analyze ECG
                     </button>
 
-                    <div class="loading" id="loading">
+                    <div
+                        class="loading"
+                        id="loading"
+                    >
                         Analyzing ECG...
                     </div>
 
-                    <div class="result-box" id="resultBox">
+                    <div
+                        class="result-box"
+                        id="resultBox"
+                    >
 
-                        <div class="result-item" id="rhythm"></div>
+                        <div
+                            class="result-item"
+                            id="rhythm"
+                        ></div>
 
-                        <div class="result-item" id="heartRate"></div>
+                        <div
+                            class="result-item"
+                            id="heartRate"
+                        ></div>
 
-                        <div class="result-item" id="quality"></div>
+                        <div
+                            class="result-item"
+                            id="quality"
+                        ></div>
 
-                        <div class="result-item" id="confidence"></div>
+                        <div
+                            class="result-item"
+                            id="confidence"
+                        ></div>
 
-                        <div class="result-item" id="interpretation"></div>
+                        <div
+                            class="result-item"
+                            id="interpretation"
+                        ></div>
 
                     </div>
 
@@ -340,7 +401,10 @@
 
     </section>
 
-    <section class="features" id="features">
+    <section
+        class="features"
+        id="features"
+    >
 
         <h2 class="section-title">
             Platform Features
@@ -349,42 +413,73 @@
         <div class="feature-grid">
 
             <div class="feature-card">
+
                 <i class="fa-solid fa-wave-square"></i>
-                <h3>ECG Signal Processing</h3>
+
+                <h3>
+                    ECG Signal Processing
+                </h3>
+
                 <p>
-                    Advanced preprocessing and ECG waveform extraction.
+                    Advanced ECG preprocessing
+                    and waveform extraction.
                 </p>
+
             </div>
 
             <div class="feature-card">
+
                 <i class="fa-solid fa-brain"></i>
-                <h3>AI Rhythm Analysis</h3>
+
+                <h3>
+                    AI Rhythm Analysis
+                </h3>
+
                 <p>
-                    AI-based cardiac rhythm interpretation system.
+                    Intelligent rhythm detection
+                    system for ECG research.
                 </p>
+
             </div>
 
             <div class="feature-card">
+
                 <i class="fa-solid fa-heart-circle-check"></i>
-                <h3>Heart Rate Detection</h3>
+
+                <h3>
+                    Heart Rate Detection
+                </h3>
+
                 <p>
-                    Automatic R-peak detection and BPM calculation.
+                    Automatic R-peak detection
+                    and BPM calculation.
                 </p>
+
             </div>
 
             <div class="feature-card">
+
                 <i class="fa-solid fa-shield-heart"></i>
-                <h3>Signal Validation</h3>
+
+                <h3>
+                    Signal Validation
+                </h3>
+
                 <p>
-                    ECG quality and artifact detection system.
+                    ECG quality verification
+                    and artifact filtering.
                 </p>
+
             </div>
 
         </div>
 
     </section>
 
-    <section class="contact" id="contact">
+    <section
+        class="contact"
+        id="contact"
+    >
 
         <h2 class="section-title">
             Contact
@@ -394,24 +489,46 @@
 
             <div class="contact-box">
 
-                <h2>Research Platform</h2>
+                <h2>
+                    Developer Team
+                </h2>
 
                 <p>
-                    ECG AI is an educational and research-focused platform
-                    designed for automated ECG analysis.
+                    <strong>
+                        Dr. Komiljonov Akrom
+                    </strong>
+                </p>
+
+                <p>
+                    Email:
+                    komiljonovakrom9101@gmail.com
+                </p>
+
+                <p>
+                    <strong>
+                        Dr. Qadamboyev Farruh
+                    </strong>
+                </p>
+
+                <p>
+                    Phone:
+                    +998 93 212 23 08
                 </p>
 
             </div>
 
             <div class="contact-box">
 
-                <h2>Developer</h2>
+                <h2>
+                    About Platform
+                </h2>
 
-                <p>Email: your@email.com</p>
-
-                <p>Location: Uzbekistan</p>
-
-                <p>AI Medical Technology Research</p>
+                <p>
+                    ECG AI is an educational and
+                    research-focused ECG analysis
+                    platform using AI-assisted
+                    rhythm detection technology.
+                </p>
 
             </div>
 
@@ -420,75 +537,131 @@
     </section>
 
     <footer class="footer">
-        ECG AI Analyzer © 2026
-    </footer>
 
+        ECG AI Analyzer © 2026
+
+    </footer>
 
 <script>
 
-async function analyzeECG() {
+const ecgFile =
+document.getElementById('ecgFile');
 
-    const fileInput = document.getElementById('ecgFile');
+const preview =
+document.getElementById('preview');
 
-    const file = fileInput.files[0];
+ecgFile.addEventListener(
+    'change',
+    function(e){
 
-    const loading = document.getElementById('loading');
+        const file = e.target.files[0];
 
-    const resultBox = document.getElementById('resultBox');
+        if(file){
 
-    if (!file) {
-        alert('Please select ECG image');
+            preview.src =
+            URL.createObjectURL(file);
+
+            preview.style.display =
+            'block';
+        }
+    }
+);
+
+async function analyzeECG(){
+
+    const file =
+    ecgFile.files[0];
+
+    const loading =
+    document.getElementById('loading');
+
+    const resultBox =
+    document.getElementById('resultBox');
+
+    if(!file){
+
+        alert(
+            'Please select ECG image'
+        );
+
         return;
     }
 
-    const formData = new FormData();
+    const formData =
+    new FormData();
 
-    formData.append('file', file);
+    formData.append(
+        'file',
+        file
+    );
 
-    loading.style.display = 'block';
+    loading.style.display =
+    'block';
 
-    resultBox.style.display = 'none';
+    resultBox.style.display =
+    'none';
 
-    try {
+    try{
 
-        const response = await fetch('/analyze', {
-            method: 'POST',
-            body: formData
+        const response =
+        await fetch('/analyze',{
+
+            method:'POST',
+
+            body:formData
         });
 
-        const data = await response.json();
+        const data =
+        await response.json();
 
-        loading.style.display = 'none';
+        loading.style.display =
+        'none';
 
-        if (!data.success) {
+        if(!data.success){
+
             alert(data.error);
+
             return;
         }
 
-        resultBox.style.display = 'block';
+        resultBox.style.display =
+        'block';
 
-        document.getElementById('rhythm').innerHTML =
-            `<b>Rhythm:</b> ${data.rhythm}`;
+        document.getElementById(
+            'rhythm'
+        ).innerHTML =
+        `<b>Rhythm:</b> ${data.rhythm}`;
 
-        document.getElementById('heartRate').innerHTML =
-            `<b>Heart Rate:</b> ${data.heart_rate} BPM`;
+        document.getElementById(
+            'heartRate'
+        ).innerHTML =
+        `<b>Heart Rate:</b> ${data.heart_rate} BPM`;
 
-        document.getElementById('quality').innerHTML =
-            `<b>Signal Quality:</b> ${data.signal_quality}`;
+        document.getElementById(
+            'quality'
+        ).innerHTML =
+        `<b>Signal Quality:</b> ${data.signal_quality}`;
 
-        document.getElementById('confidence').innerHTML =
-            `<b>Confidence:</b> ${data.confidence}%`;
+        document.getElementById(
+            'confidence'
+        ).innerHTML =
+        `<b>Confidence:</b> ${data.confidence}%`;
 
-        document.getElementById('interpretation').innerHTML =
-            `<b>Interpretation:</b> ${data.interpretation}`;
+        document.getElementById(
+            'interpretation'
+        ).innerHTML =
+        `<b>Interpretation:</b> ${data.interpretation}`;
 
     }
 
-    catch(error) {
+    catch(error){
 
-        loading.style.display = 'none';
+        loading.style.display =
+        'none';
 
-        alert('Server error');
+        alert(
+            'Analyze failed'
+        );
 
         console.error(error);
     }
@@ -498,92 +671,3 @@ async function analyzeECG() {
 
 </body>
 </html>
-```
-
----
-
-# PNG/JPG ishlashi uchun BACKEND FIX
-
-`app.py` ichida:
-
-```python
-ALLOWED_EXTENSIONS = {
-    'png',
-    'jpg',
-    'jpeg'
-}
-
-
-def allowed_file(filename):
-
-    return (
-        '.' in filename
-        and
-        filename.rsplit('.', 1)[1].lower()
-        in ALLOWED_EXTENSIONS
-    )
-```
-
-Analyze route ichida:
-
-```python
-if not allowed_file(file.filename):
-
-    return jsonify({
-
-        "success": False,
-
-        "error": "Only PNG/JPG/JPEG allowed"
-
-    }), 400
-```
-
----
-
-# FINAL STRUCTURE
-
-```text
-project/
-│
-├── app.py
-├── requirements.txt
-│
-├── analyzer/
-│
-├── templates/
-│   └── index.html
-│
-└── static/
-    └── uploads/
-```
-
----
-
-# Render Settings
-
-## Build Command
-
-```bash
-pip install -r requirements.txt
-```
-
-## Start Command
-
-```bash
-gunicorn app:app
-```
-
----
-
-# requirements.txt
-
-```txt
-flask
-flask-cors
-gunicorn
-numpy
-opencv-python-headless
-scipy
-pillow
-matplotlib
-```
