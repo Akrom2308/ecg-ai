@@ -1,613 +1,589 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ECG Analyzer — AI-Powered Rhythm Classification</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg:       #0a0e1a;
-      --surface:  #111827;
-      --border:   #1f2937;
-      --accent:   #00d4ff;
-      --accent2:  #7c3aed;
-      --text:     #f1f5f9;
-      --muted:    #64748b;
-      --green:    #22c55e;
-      --red:      #ef4444;
-      --orange:   #f97316;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg); color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh; overflow-x: hidden;
-    }
-    /* ── Grid bg ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.3;
-      pointer-events: none;
-    }
-    /* ── Header ── */
-    header {
-      position: relative; z-index: 10;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1.25rem 2rem;
-      border-bottom: 1px solid var(--border);
-      background: rgba(10,14,26,0.9);
-      backdrop-filter: blur(12px);
-    }
-    .logo {
-      font-family: 'Space Mono', monospace;
-      font-size: 1.1rem; font-weight: 700;
-      color: var(--accent); letter-spacing: -0.02em;
-    }
-    .logo span { color: var(--text); }
-    .status-badge {
-      font-family: 'Space Mono', monospace; font-size: 0.7rem;
-      padding: 0.3rem 0.75rem; border-radius: 999px;
-      border: 1px solid var(--green); color: var(--green);
-      display: flex; align-items: center; gap: 0.4rem;
-    }
-    .status-badge::before {
-      content: ''; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--green);
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    /* ── Main layout ── */
-    main {
-      position: relative; z-index: 1;
-      max-width: 1200px; margin: 0 auto;
-      padding: 2rem 1.5rem;
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 1.5rem;
-    }
-    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-    /* ── Panel ── */
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
-    }
-    .panel-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.75rem; letter-spacing: 0.08em;
-      color: var(--muted); text-transform: uppercase;
-      display: flex; align-items: center; gap: 0.5rem;
-    }
-    .panel-header .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent);
-    }
-    .panel-body { padding: 1.25rem; }
-    /* ── Upload area ── */
-    .upload-zone {
-      border: 2px dashed var(--border);
-      border-radius: 10px; padding: 2rem 1rem;
-      text-align: center; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .upload-zone:hover, .upload-zone.drag-over {
-      border-color: var(--accent);
-      background: rgba(0,212,255,0.04);
-    }
-    .upload-zone .icon { font-size: 2rem; margin-bottom: 0.75rem; }
-    .upload-zone p { font-size: 0.85rem; color: var(--muted); }
-    .upload-zone strong { color: var(--text); font-size: 0.95rem; display: block; margin-bottom: 0.25rem; }
-    #fileInput { display: none; }
-    /* ── Buttons ── */
-    .btn {
-      width: 100%; padding: 0.75rem 1rem;
-      border: none; border-radius: 8px; cursor: pointer;
-      font-family: 'Space Mono', monospace; font-size: 0.8rem;
-      font-weight: 700; letter-spacing: 0.04em;
-      transition: all 0.15s;
-    }
-    .btn-primary {
-      background: var(--accent); color: #000;
-    }
-    .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .btn-secondary {
-      background: transparent; color: var(--muted);
-      border: 1px solid var(--border); margin-top: 0.5rem;
-    }
-    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-    /* ── MIT-BIH select ── */
-    .select-wrapper { position: relative; margin-top: 1rem; }
-    select {
-      width: 100%; padding: 0.65rem 1rem;
-      background: var(--bg); color: var(--text);
-      border: 1px solid var(--border); border-radius: 8px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
-      appearance: none; cursor: pointer;
-    }
-    select:focus { outline: none; border-color: var(--accent); }
-    /* ── Divider ── */
-    .divider {
-      display: flex; align-items: center; gap: 0.75rem;
-      margin: 1rem 0; color: var(--muted); font-size: 0.75rem;
-    }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    /* ── Chart area ── */
-    #chartCanvas {
-      width: 100%; height: 220px;
-      display: block; border-radius: 6px;
-      background: var(--bg);
-    }
-    .chart-controls {
-      display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;
-    }
-    .chart-btn {
-      font-size: 0.72rem; padding: 0.3rem 0.7rem;
-      border-radius: 6px; border: 1px solid var(--border);
-      background: transparent; color: var(--muted); cursor: pointer;
-      font-family: 'Space Mono', monospace;
-      transition: all 0.15s;
-    }
-    .chart-btn:hover, .chart-btn.active {
-      border-color: var(--accent); color: var(--accent);
-    }
-    /* ── Metrics grid ── */
-    .metrics-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem; margin-top: 1rem;
-    }
-    .metric-card {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; padding: 0.75rem;
-    }
-    .metric-label {
-      font-size: 0.65rem; color: var(--muted);
-      font-family: 'Space Mono', monospace;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      margin-bottom: 0.25rem;
-    }
-    .metric-value {
-      font-size: 1.4rem; font-weight: 700;
-      font-family: 'Space Mono', monospace;
-      color: var(--text); line-height: 1;
-    }
-    .metric-unit { font-size: 0.65rem; color: var(--muted); margin-top: 0.1rem; }
-    /* ── Classification result ── */
-    #classResult {
-      margin-top: 1rem; padding: 1rem;
-      border-radius: 10px; border: 1px solid var(--border);
-      background: var(--bg); display: none;
-    }
-    .rhythm-badge {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      font-family: 'Space Mono', monospace; font-size: 0.9rem;
-      font-weight: 700; padding: 0.4rem 0.9rem;
-      border-radius: 999px; border: 2px solid currentColor;
-      margin-bottom: 0.75rem;
-    }
-    .confidence-bar {
-      height: 4px; border-radius: 2px;
-      background: var(--border); margin: 0.5rem 0 0.75rem;
-      overflow: hidden;
-    }
-    .confidence-fill {
-      height: 100%; border-radius: 2px;
-      background: var(--accent);
-      transition: width 0.6s ease;
-    }
-    .reasoning-text {
-      font-size: 0.82rem; color: var(--muted);
-      line-height: 1.6; margin-bottom: 0.75rem;
-    }
-    .findings-list {
-      list-style: none; display: flex; flex-direction: column; gap: 0.3rem;
-    }
-    .findings-list li {
-      font-size: 0.78rem; color: var(--muted);
-      padding-left: 1rem; position: relative;
-    }
-    .findings-list li::before {
-      content: '→'; position: absolute; left: 0; color: var(--accent);
-    }
-    .urgent-banner {
-      display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.6rem 0.9rem; border-radius: 8px;
-      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
-      color: var(--red); font-size: 0.8rem; margin-top: 0.75rem;
-    }
-    /* ── Quality bar ── */
-    .quality-row {
-      display: flex; align-items: center; gap: 0.75rem;
-      font-size: 0.78rem; color: var(--muted); margin-top: 0.75rem;
-    }
-    .quality-pip {
-      width: 10px; height: 10px; border-radius: 50%;
-    }
-    /* ── Spinner ── */
-    .spinner {
-      width: 20px; height: 20px; border-radius: 50%;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    /* ── Toast ── */
-    #toast {
-      position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.85rem 1.25rem;
-      font-size: 0.85rem; max-width: 320px;
-      transform: translateY(100px); opacity: 0;
-      transition: all 0.3s ease;
-    }
-    #toast.show { transform: translateY(0); opacity: 1; }
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>ECG AI Analyzer</title>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #07111f;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            width: 100%;
+            padding: 20px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00e5ff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #00e5ff;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 8%;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 60px;
+            align-items: center;
+        }
+
+        .left h1 {
+            font-size: 58px;
+            line-height: 1.1;
+            margin-bottom: 25px;
+        }
+
+        .left h1 span {
+            color: #00e5ff;
+        }
+
+        .left p {
+            color: #cbd5e1;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed #00e5ff;
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .upload-box:hover {
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .upload-box i {
+            font-size: 70px;
+            color: #00e5ff;
+            margin-bottom: 20px;
+        }
+
+        .upload-box h2 {
+            margin-bottom: 15px;
+        }
+
+        .upload-box p {
+            color: #cbd5e1;
+            margin-bottom: 25px;
+        }
+
+        input[type=file] {
+            display: none;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #00e5ff;
+            color: #07111f;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .upload-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .analyze-btn {
+            margin-top: 20px;
+            width: 100%;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            background: linear-gradient(90deg,#00e5ff,#00bcd4);
+            color: black;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .result-box {
+            margin-top: 25px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 18px;
+            padding: 20px;
+            display: none;
+        }
+
+        .result-item {
+            margin-bottom: 14px;
+            color: #dbeafe;
+        }
+
+        .loading {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .features {
+            padding: 100px 8%;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 70px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 24px;
+            padding: 35px;
+            transition: 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .feature-card i {
+            font-size: 45px;
+            color: #00e5ff;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 15px;
+        }
+
+        .contact {
+            padding: 100px 8%;
+        }
+
+        .contact-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+            gap: 40px;
+        }
+
+        .contact-box {
+            background: rgba(255,255,255,0.05);
+            padding: 35px;
+            border-radius: 24px;
+        }
+
+        .contact-box h2 {
+            margin-bottom: 20px;
+        }
+
+        .contact-box p {
+            margin-bottom: 14px;
+            color: #cbd5e1;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #94a3b8;
+        }
+
+        @media(max-width:768px) {
+
+            .left h1 {
+                font-size: 42px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding-top: 70px;
+            }
+        }
+
+    </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">ECG<span>·</span>AI</div>
-  <div class="status-badge">System Online</div>
-</header>
+    <nav class="navbar">
+        <div class="logo">ECG AI</div>
 
-<main>
-  <!-- LEFT SIDEBAR -->
-  <aside>
-    <!-- Upload Panel -->
-    <div class="panel" style="margin-bottom:1rem">
-      <div class="panel-header"><span class="dot"></span>Input Source</div>
-      <div class="panel-body">
-        <label class="upload-zone" id="uploadZone" for="fileInput">
-          <div class="icon">📂</div>
-          <strong>Upload ECG File</strong>
-          <p>CSV, TXT, EDF, JSON, MIT-BIH .dat</p>
-        </label>
-        <input type="file" id="fileInput" accept=".csv,.txt,.edf,.json,.dat" style="display:none" />
-        <button class="btn btn-primary" id="analyzeBtn" style="margin-top:0.75rem" disabled>
-          Analyze Signal
-        </button>
-        <div class="divider">or use demo data</div>
-        <button class="btn btn-secondary" id="syntheticBtn">
-          ⚡ Generate Synthetic ECG
-        </button>
-        <div class="divider">MIT-BIH Database</div>
-        <div class="select-wrapper">
-          <select id="mitbihSelect">
-            <option value="">— Select Record —</option>
-          </select>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#features">Features</a>
+            <a href="#contact">Contact</a>
         </div>
-        <button class="btn btn-secondary" id="mitbihBtn" style="margin-top:0.5rem">
-          Load from PhysioNet
-        </button>
-      </div>
-    </div>
+    </nav>
 
-    <!-- HRV Panel -->
-    <div class="panel">
-      <div class="panel-header"><span class="dot" style="background:var(--accent2)"></span>HRV Metrics</div>
-      <div class="panel-body">
-        <div id="hrvMetrics" style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1rem 0">
-          No signal loaded
+    <section class="hero" id="home">
+
+        <div class="hero-content">
+
+            <div class="left">
+
+                <h1>
+                    AI Powered
+                    <span>ECG Analysis</span>
+                </h1>
+
+                <p>
+                    Upload ECG images in PNG or JPG format and get AI-based
+                    rhythm analysis, heart rate estimation, signal quality
+                    detection, and automated ECG interpretation.
+                </p>
+
+            </div>
+
+            <div class="right">
+
+                <div class="upload-box">
+
+                    <i class="fa-solid fa-heart-pulse"></i>
+
+                    <h2>Upload ECG</h2>
+
+                    <p>
+                        Supported formats: PNG, JPG, JPEG
+                    </p>
+
+                    <label for="ecgFile" class="upload-btn">
+                        Choose ECG Image
+                    </label>
+
+                    <input
+                        type="file"
+                        id="ecgFile"
+                        accept="image/png,image/jpeg,image/jpg"
+                    />
+
+                    <button class="analyze-btn" onclick="analyzeECG()">
+                        Analyze ECG
+                    </button>
+
+                    <div class="loading" id="loading">
+                        Analyzing ECG...
+                    </div>
+
+                    <div class="result-box" id="resultBox">
+
+                        <div class="result-item" id="rhythm"></div>
+
+                        <div class="result-item" id="heartRate"></div>
+
+                        <div class="result-item" id="quality"></div>
+
+                        <div class="result-item" id="confidence"></div>
+
+                        <div class="result-item" id="interpretation"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
-    </div>
-  </aside>
 
-  <!-- RIGHT MAIN AREA -->
-  <div>
-    <!-- ECG Chart Panel -->
-    <div class="panel" style="margin-bottom:1rem">
-      <div class="panel-header">
-        <span class="dot" style="background:var(--green)"></span>
-        ECG Signal
-        <span id="signalMeta" style="margin-left:auto;font-size:0.7rem;color:var(--muted)"></span>
-      </div>
-      <div class="panel-body">
-        <canvas id="chartCanvas"></canvas>
-        <div class="chart-controls">
-          <button class="chart-btn active" id="showRaw">Raw</button>
-          <button class="chart-btn" id="showFiltered">Filtered</button>
-          <button class="chart-btn" id="showPeaks">R-Peaks</button>
-          <button class="chart-btn" id="showQRS">QRS</button>
-          <span style="margin-left:auto;font-size:0.72rem;color:var(--muted);font-family:monospace" id="processingTime"></span>
+    </section>
+
+    <section class="features" id="features">
+
+        <h2 class="section-title">
+            Platform Features
+        </h2>
+
+        <div class="feature-grid">
+
+            <div class="feature-card">
+                <i class="fa-solid fa-wave-square"></i>
+                <h3>ECG Signal Processing</h3>
+                <p>
+                    Advanced preprocessing and ECG waveform extraction.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-brain"></i>
+                <h3>AI Rhythm Analysis</h3>
+                <p>
+                    AI-based cardiac rhythm interpretation system.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-heart-circle-check"></i>
+                <h3>Heart Rate Detection</h3>
+                <p>
+                    Automatic R-peak detection and BPM calculation.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-shield-heart"></i>
+                <h3>Signal Validation</h3>
+                <p>
+                    ECG quality and artifact detection system.
+                </p>
+            </div>
+
         </div>
-        <!-- Metrics row -->
-        <div class="metrics-grid" id="metricsGrid">
-          <div class="metric-card"><div class="metric-label">Heart Rate</div><div class="metric-value" id="mHR">—</div><div class="metric-unit">bpm</div></div>
-          <div class="metric-card"><div class="metric-label">R-Peaks</div><div class="metric-value" id="mPeaks">—</div><div class="metric-unit">detected</div></div>
-          <div class="metric-card"><div class="metric-label">Duration</div><div class="metric-value" id="mDuration">—</div><div class="metric-unit">seconds</div></div>
+
+    </section>
+
+    <section class="contact" id="contact">
+
+        <h2 class="section-title">
+            Contact
+        </h2>
+
+        <div class="contact-container">
+
+            <div class="contact-box">
+
+                <h2>Research Platform</h2>
+
+                <p>
+                    ECG AI is an educational and research-focused platform
+                    designed for automated ECG analysis.
+                </p>
+
+            </div>
+
+            <div class="contact-box">
+
+                <h2>Developer</h2>
+
+                <p>Email: your@email.com</p>
+
+                <p>Location: Uzbekistan</p>
+
+                <p>AI Medical Technology Research</p>
+
+            </div>
+
         </div>
-      </div>
-    </div>
 
-    <!-- Classification Panel -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="dot" style="background:var(--orange)"></span>
-        AI Classification
-        <span id="classSpinner" style="margin-left:auto;display:none"><span class="spinner"></span></span>
-      </div>
-      <div class="panel-body">
-        <div id="classPlaceholder" style="color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem 0">
-          Run analysis to see rhythm classification
-        </div>
-        <div id="classResult">
-          <div id="rhythmBadge" class="rhythm-badge">—</div>
-          <div style="font-size:0.72rem;color:var(--muted);font-family:monospace;margin-bottom:0.25rem">
-            Confidence: <span id="confPct">—</span>
-          </div>
-          <div class="confidence-bar"><div class="confidence-fill" id="confBar" style="width:0%"></div></div>
-          <div class="reasoning-text" id="reasoningText"></div>
-          <ul class="findings-list" id="findingsList"></ul>
-          <div id="recommendationText" style="margin-top:0.75rem;font-size:0.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:0.75rem"></div>
-          <div class="urgent-banner" id="urgentBanner" style="display:none">
-            ⚠️ <strong>Urgent:</strong>&nbsp;<span id="urgentText"></span>
-          </div>
-          <div class="quality-row">
-            <div class="quality-pip" id="qualityPip"></div>
-            <span id="qualityText"></span>
-            <span style="margin-left:auto;font-family:monospace;font-size:0.7rem" id="snrText"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</main>
+    </section>
 
-<div id="toast"></div>
+    <footer class="footer">
+        ECG AI Analyzer © 2026
+    </footer>
 
-<script type="module">
-  import { ECGPipeline, MIT_BIH_RECORDS, MITBIHDatabase } from '/static/js/ecgPipeline.js';
 
-  // ─── State ──────────────────────────────────────────────────────────────
-  let pipeline = new ECGPipeline();
-  let currentResult = null;
-  let displayMode = 'raw'; // raw | filtered | peaks | qrs
-  let currentFile = null;
+<script>
 
-  // ─── MIT-BIH dropdown ────────────────────────────────────────────────────
-  const mitSel = document.getElementById('mitbihSelect');
-  MITBIHDatabase.getRecordList().forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = r.id;
-    opt.textContent = `${r.id} — ${r.description || 'ECG Record'}`;
-    mitSel.appendChild(opt);
-  });
+async function analyzeECG() {
 
-  // ─── Upload zone ─────────────────────────────────────────────────────────
-  const zone = document.getElementById('uploadZone');
-  const fileInput = document.getElementById('fileInput');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0]; if (f) setFile(f);
-  });
-  fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+    const fileInput = document.getElementById('ecgFile');
 
-  function setFile(file) {
-    currentFile = file;
-    zone.querySelector('strong').textContent = file.name;
-    zone.querySelector('p').textContent = `${(file.size / 1024).toFixed(1)} KB`;
-    document.getElementById('analyzeBtn').disabled = false;
-  }
+    const file = fileInput.files[0];
 
-  // ─── Analyze button ───────────────────────────────────────────────────────
-  document.getElementById('analyzeBtn').addEventListener('click', async () => {
-    if (!currentFile) return;
-    showSpinner(true);
-    try {
-      const result = await pipeline.analyzeFile(currentFile);
-      renderResult(result);
-    } catch (e) {
-      toast('Error: ' + e.message, true);
-    } finally { showSpinner(false); }
-  });
+    const loading = document.getElementById('loading');
 
-  // ─── Synthetic ECG ────────────────────────────────────────────────────────
-  document.getElementById('syntheticBtn').addEventListener('click', async () => {
-    showSpinner(true);
-    try {
-      const res = await fetch('/api/synthetic?duration=10&fs=360&bpm=75');
-      const data = await res.json();
-      const result = await pipeline.analyzeSignal(data.signal, data.sampleRate);
-      result.meta = { source: 'Synthetic ECG (75 bpm)', sampleRate: 360 };
-      renderResult(result);
-    } catch (e) { toast('Error: ' + e.message, true); }
-    finally { showSpinner(false); }
-  });
+    const resultBox = document.getElementById('resultBox');
 
-  // ─── MIT-BIH Load ─────────────────────────────────────────────────────────
-  document.getElementById('mitbihBtn').addEventListener('click', async () => {
-    const record = mitSel.value; if (!record) { toast('Select a record first'); return; }
-    showSpinner(true);
-    try {
-      const result = await pipeline.analyzeMITBIHRecord(record, 0);
-      renderResult(result);
-    } catch (e) { toast('PhysioNet error: ' + e.message, true); }
-    finally { showSpinner(false); }
-  });
-
-  // ─── Chart toggle buttons ─────────────────────────────────────────────────
-  ['showRaw','showFiltered','showPeaks','showQRS'].forEach(id => {
-    document.getElementById(id).addEventListener('click', () => {
-      document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      displayMode = { showRaw:'raw', showFiltered:'filtered', showPeaks:'peaks', showQRS:'qrs' }[id];
-      if (currentResult) drawChart(currentResult);
-    });
-  });
-
-  // ─── Render full result ───────────────────────────────────────────────────
-  function renderResult(result) {
-    currentResult = result;
-    drawChart(result);
-    updateMetrics(result);
-    updateClassification(result);
-    updateHRV(result);
-    document.getElementById('signalMeta').textContent =
-      `${result.meta?.source || 'ECG'} · ${result.sampleRate} Hz`;
-    document.getElementById('processingMs') &&
-      (document.getElementById('processingTime').textContent = `${result.processingMs} ms`);
-  }
-
-  // ─── Canvas chart ─────────────────────────────────────────────────────────
-  function drawChart(result) {
-    const canvas = document.getElementById('chartCanvas');
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const W = canvas.clientWidth, H = canvas.clientHeight;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, W, H);
-
-    const signal = displayMode === 'raw' ? result.rawSignal : result.filteredSignal;
-    const maxPts = 2000;
-    const step = Math.max(1, Math.floor(signal.length / maxPts));
-    const pts = [];
-    for (let i = 0; i < signal.length; i += step) pts.push(signal[i]);
-
-    const min = Math.min(...pts), max = Math.max(...pts);
-    const range = max - min || 1;
-    const pad = { t: 16, b: 16, l: 8, r: 8 };
-    const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
-
-    // Grid
-    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.5;
-    for (let y = 0; y <= 4; y++) {
-      const yy = pad.t + (y / 4) * iH;
-      ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(W - pad.r, yy); ctx.stroke();
+    if (!file) {
+        alert('Please select ECG image');
+        return;
     }
 
-    // Signal line
-    ctx.strokeStyle = displayMode === 'raw' ? '#00d4ff' : '#22c55e';
-    ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    pts.forEach((v, i) => {
-      const x = pad.l + (i / (pts.length - 1)) * iW;
-      const y = pad.t + iH - ((v - min) / range) * iH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
+    const formData = new FormData();
 
-    // R-peaks overlay
-    if (displayMode === 'peaks' || displayMode === 'qrs') {
-      result.peaks.forEach(pi => {
-        const si = Math.floor(pi / step);
-        if (si >= pts.length) return;
-        const x = pad.l + (si / (pts.length - 1)) * iW;
-        const y = pad.t + iH - ((pts[si] - min) / range) * iH;
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
-      });
+    formData.append('file', file);
+
+    loading.style.display = 'block';
+
+    resultBox.style.display = 'none';
+
+    try {
+
+        const response = await fetch('/analyze', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        loading.style.display = 'none';
+
+        if (!data.success) {
+            alert(data.error);
+            return;
+        }
+
+        resultBox.style.display = 'block';
+
+        document.getElementById('rhythm').innerHTML =
+            `<b>Rhythm:</b> ${data.rhythm}`;
+
+        document.getElementById('heartRate').innerHTML =
+            `<b>Heart Rate:</b> ${data.heart_rate} BPM`;
+
+        document.getElementById('quality').innerHTML =
+            `<b>Signal Quality:</b> ${data.signal_quality}`;
+
+        document.getElementById('confidence').innerHTML =
+            `<b>Confidence:</b> ${data.confidence}%`;
+
+        document.getElementById('interpretation').innerHTML =
+            `<b>Interpretation:</b> ${data.interpretation}`;
+
     }
 
-    // QRS overlays
-    if (displayMode === 'qrs' && result.qrs) {
-      result.qrs.forEach(({ Q, S }) => {
-        const qi = Math.floor(Q / step), si2 = Math.floor(S / step);
-        if (qi >= pts.length || si2 >= pts.length) return;
-        const x1 = pad.l + (qi / (pts.length - 1)) * iW;
-        const x2 = pad.l + (si2 / (pts.length - 1)) * iW;
-        ctx.fillStyle = 'rgba(124,58,237,0.15)';
-        ctx.fillRect(x1, pad.t, x2 - x1, iH);
-      });
+    catch(error) {
+
+        loading.style.display = 'none';
+
+        alert('Server error');
+
+        console.error(error);
     }
-  }
+}
 
-  // ─── Metrics ──────────────────────────────────────────────────────────────
-  function updateMetrics(r) {
-    document.getElementById('mHR').textContent = r.meanHR || '—';
-    document.getElementById('mPeaks').textContent = r.peaks.length;
-    document.getElementById('mDuration').textContent = (r.rawSignal.length / r.sampleRate).toFixed(1);
-  }
-
-  // ─── Classification ───────────────────────────────────────────────────────
-  function updateClassification(r) {
-    const c = r.classification;
-    document.getElementById('classPlaceholder').style.display = 'none';
-    const cr = document.getElementById('classResult');
-    cr.style.display = 'block';
-
-    const badge = document.getElementById('rhythmBadge');
-    badge.textContent = `${c.rhythm} — ${c.label}`;
-    badge.style.color = c.color; badge.style.borderColor = c.color;
-
-    const pct = Math.round(c.confidence * 100);
-    document.getElementById('confPct').textContent = pct + '%';
-    document.getElementById('confBar').style.width = pct + '%';
-    document.getElementById('confBar').style.background = c.color;
-
-    document.getElementById('reasoningText').textContent = c.reasoning;
-    const fl = document.getElementById('findingsList');
-    fl.innerHTML = (c.findings || []).map(f => `<li>${f}</li>`).join('');
-    document.getElementById('recommendationText').textContent = '💊 ' + (c.recommendation || '');
-
-    const ub = document.getElementById('urgentBanner');
-    if (c.urgent) {
-      ub.style.display = 'flex';
-      document.getElementById('urgentText').textContent = c.recommendation || 'Immediate attention required';
-    } else { ub.style.display = 'none'; }
-
-    // Quality
-    const q = r.signalQuality;
-    const colors = { Good: '#22c55e', Acceptable: '#f59e0b', Poor: '#ef4444' };
-    document.getElementById('qualityPip').style.background = colors[q.label] || '#6b7280';
-    document.getElementById('qualityText').textContent = `Signal: ${q.label} (${q.score}/100)`;
-    document.getElementById('snrText').textContent = `SNR: ${q.snrEstimate}`;
-  }
-
-  // ─── HRV panel ────────────────────────────────────────────────────────────
-  function updateHRV(r) {
-    const h = r.hrv;
-    document.getElementById('hrvMetrics').innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;text-align:left">
-        ${[
-          ['SDNN', (h.sdnn*1000).toFixed(0)+'ms', 'ms'],
-          ['RMSSD', (h.rmssd*1000).toFixed(0)+'ms', 'ms'],
-          ['pNN50', h.pnn50+'%', '%'],
-          ['Mean RR', h.meanRR+'ms', 'ms'],
-        ].map(([l,v]) => `
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.6rem">
-            <div style="font-size:0.62rem;color:var(--muted);font-family:monospace;letter-spacing:.06em;text-transform:uppercase">${l}</div>
-            <div style="font-size:1.1rem;font-weight:700;font-family:monospace;color:var(--text)">${v}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────
-  function showSpinner(on) {
-    document.getElementById('classSpinner').style.display = on ? 'block' : 'none';
-    document.getElementById('analyzeBtn').disabled = on;
-  }
-
-  function toast(msg, err = false) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.borderColor = err ? '#ef4444' : '#22c55e';
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3500);
-  }
-
-  window.addEventListener('resize', () => { if (currentResult) drawChart(currentResult); });
 </script>
+
 </body>
 </html>
+```
+
+---
+
+# PNG/JPG ishlashi uchun BACKEND FIX
+
+`app.py` ichida:
+
+```python
+ALLOWED_EXTENSIONS = {
+    'png',
+    'jpg',
+    'jpeg'
+}
+
+
+def allowed_file(filename):
+
+    return (
+        '.' in filename
+        and
+        filename.rsplit('.', 1)[1].lower()
+        in ALLOWED_EXTENSIONS
+    )
+```
+
+Analyze route ichida:
+
+```python
+if not allowed_file(file.filename):
+
+    return jsonify({
+
+        "success": False,
+
+        "error": "Only PNG/JPG/JPEG allowed"
+
+    }), 400
+```
+
+---
+
+# FINAL STRUCTURE
+
+```text
+project/
+│
+├── app.py
+├── requirements.txt
+│
+├── analyzer/
+│
+├── templates/
+│   └── index.html
+│
+└── static/
+    └── uploads/
+```
+
+---
+
+# Render Settings
+
+## Build Command
+
+```bash
+pip install -r requirements.txt
+```
+
+## Start Command
+
+```bash
+gunicorn app:app
+```
+
+---
+
+# requirements.txt
+
+```txt
+flask
+flask-cors
+gunicorn
+numpy
+opencv-python-headless
+scipy
+pillow
+matplotlib
+```
